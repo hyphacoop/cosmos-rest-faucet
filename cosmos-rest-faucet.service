@@ -1,0 +1,13 @@
+[Unit]
+Description="Cosmos REST faucet"
+
+[Service]
+User={USER}
+Environment="PATH=/usr/local/go/bin:{USER_HOME}/go/bin:$PATH"
+WorkingDirectory={USER_HOME}/cosmos-rest-faucet
+ExecStart={USER_HOME}/cosmos-rest-faucet/.env/bin/hypercorn cosmos_rest_faucet:app
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
