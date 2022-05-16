@@ -14,7 +14,7 @@ fi
 if [ $CI ]
 then
     echo "Linting python"
-    find . -type f -name "*.py" | xargs pylint --disable=W1510
+    find . -type f -name "*.py" | xargs pylint --disable=W1510,E0401
     if [ $? -ne 0 ]
     then
     	pylint=1
