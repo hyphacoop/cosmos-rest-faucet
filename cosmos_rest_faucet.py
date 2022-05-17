@@ -27,9 +27,9 @@ try:
     DENOM = str(config['cosmos']['denomination'])
     testnets = config['testnets']
     for net in testnets:
-        testnets[net]['name'] = net
         testnets[net]["active_day"] = datetime.datetime.today().date()
         testnets[net]["day_tally"] = 0
+    chain_ids = [data['chain_id'] for _, data in testnets.items()]
     ACTIVE_REQUESTS = {net: {} for net in testnets}
     TESTNET_OPTIONS = '|'.join(list(testnets.keys()))
 except KeyError as key_err:
@@ -88,8 +88,9 @@ def check_time_limits(address: str, testnet: dict):
     message_timestamp = time.time()
 
     # Check address allowance
-    if address in ACTIVE_REQUESTS[testnet['name']]:
-        check_time = ACTIVE_REQUESTS[testnet['name']][address]['next_request']
+    if address in ACTIVE_REQUESTS[testnet['chain_id']]:
+        check_time = ACTIVE_REQUESTS[testnet['chain_id']
+                                     ][address]['next_request']
         if check_time > message_timestamp:
             seconds_left = check_time - message_timestamp
             minutes_left = seconds_left / 60
@@ -103,10 +104,10 @@ def check_time_limits(address: str, testnet: dict):
                 f'please try again in ' \
                 f'{wait_time}'
             return False, reply
-        del ACTIVE_REQUESTS[testnet['name']][address]
+        del ACTIVE_REQUESTS[testnet['chain_id']][address]
 
-    if address not in ACTIVE_REQUESTS[testnet['name']]:
-        ACTIVE_REQUESTS[testnet['name']][address] = {
+    if address not in ACTIVE_REQUESTS[testnet['chain_id']]:
+        ACTIVE_REQUESTS[testnet['chain_id']][address] = {
             'next_request': message_timestamp + REQUEST_TIMEOUT}
 
     return True, None
@@ -162,29 +163,29 @@ async def token_request(address: str, testnet: dict):
                 # Make gaia call and send the response back
                 transfer = await gaia.tx_send(request_dict)
                 logging.info('Tokens were requested for %s in %s',
-                             address, testnet['name'])
+                             address, testnet['chain_id'])
                 now = datetime.datetime.now()
                 # Get faucet balance and save to transaction log
                 balance = await get_faucet_balance(testnet)
                 await save_transaction_statistics(f'{now.isoformat(timespec="seconds")},'
-                                                  f'{testnet["name"]},{address},'
+                                                  f'{testnet["chain_id"]},{address},'
                                                   f'{testnet["amount_to_send"] + DENOM},'
                                                   f'{transfer},'
                                                   f'{balance}')
                 return testnet['amount_to_send']+DENOM, transfer
             except subprocess.CalledProcessError as cpe:
-                del ACTIVE_REQUESTS[testnet['name']][address]
+                del ACTIVE_REQUESTS[testnet['chain_id']][address]
                 testnet['day_tally'] -= int(testnet['amount_to_send'])
                 raise cpe
         else:
             testnet['day_tally'] -= int(testnet['amount_to_send'])
             logging.info('Tokens were requested for %s in %s and was rejected',
-                         address, testnet['name'])
+                         address, testnet['chain_id'])
             return False, reply
     else:
         logging.info('Tokens were requested for %s in %s '
                      'but the daily cap has been reached',
-                     address, testnet['name'])
+                     address, testnet['chain_id'])
         return False, 'The daily cap for this faucet has been reached'
 
 
@@ -202,10 +203,10 @@ async def get_balance():
     try:
         address = request_dict['address']
         chain = request_dict['chain']
-        if chain not in testnets.keys():
+        if chain not in chain_ids:
             return json.dumps({'status': 'fail',
                                'message': 'Error: invalid chain; '
-                               'specify theta-testnet-001 or theta-devnet'})
+                               f'specify one of the following: {chain_ids}'})
         await gaia.check_address(address)
         balance = await balance_request(address=address, testnet=testnets[chain])
         response = {
@@ -238,10 +239,10 @@ async def send_tokens():
     try:
         address = request_dict['address']
         chain = request_dict['chain']
-        if chain not in testnets.keys():
+        if chain not in chain_ids:
             return json.dumps({'status': 'fail',
                                'message': 'Error: invalid chain; '
-                               'specify theta-testnet-001 or theta-devnet'})
+                               f'specify one of the following: {chain_ids}'})
         await gaia.check_address(address)
         amount, transfer = await token_request(address=address, testnet=testnets[chain])
         if amount:
@@ -266,6 +267,22 @@ async def send_tokens():
         if 'parse' in cpe.cmd:
             msg = 'Error: invalid address'
         return json.dumps({'status': 'fail', 'message': msg})
+
+
+@app.route('/', methods=['GET'])
+async def send_endpoints():
+    """
+    Respond to
+    /
+    with a list of commands available.
+    """
+    response = ('Available endpoints:<br>'
+                '<a href="/balance?address=_&chain=_">/balance?address=_&chain=_</a><br>'
+                '<a href="/request?address=_&chain=_">/request?address=_&chain=_</a><br>')
+    response = response + '<br>Chains supported:<br>'
+    for chain_id in chain_ids:
+        response = response + chain_id + '<br>'
+    return response
 
 
 if __name__ == '__main__':
