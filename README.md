@@ -40,6 +40,8 @@ This bot can be run stand-alone (mostly for testing), or as a service.
 hypercorn cosmos_rest_faucet:app
 ```
 
+- The server will listen on port 8000 by default.
+- Use the `-b` option to use a different port.
 - This can be run inside a `tmux` session.
 
 ### Service
