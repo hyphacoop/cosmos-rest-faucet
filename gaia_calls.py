@@ -9,7 +9,6 @@ gaiad utility functions
 import json
 import subprocess
 import logging
-import re
 
 
 async def check_address(address: str):
@@ -86,7 +85,7 @@ async def tx_send(request: dict):
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     try:
         tx_gaia.check_returncode()
-        response=json.loads(tx_gaia.stdout)
+        response = json.loads(tx_gaia.stdout)
         return response['txhash']
     except subprocess.CalledProcessError as cpe:
         output = str(tx_gaia.stderr).split('\n', maxsplit=1)[0]
