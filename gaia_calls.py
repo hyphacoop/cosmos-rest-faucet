@@ -11,12 +11,13 @@ import subprocess
 import logging
 
 
-async def check_address(address: str):
+async def check_address(address: str, gaia_home: str = '~/.gaia'):
     """
     gaiad keys parse <address>
     """
     check = subprocess.run(["gaiad", "keys", "parse",
                             f"{address}",
+                            f'--home={gaia_home}',
                             '--output=json'],
                            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                            text=True)
@@ -34,13 +35,14 @@ async def check_address(address: str):
     return None
 
 
-async def get_balance_list(address: str, node: str):
+async def get_balance_list(address: str, node: str, gaia_home: str = '~/.gaia'):
     """
     gaiad query bank balances <address> <node> <chain-id>
     """
     balance = subprocess.run(["gaiad", "query", "bank", "balances",
                               f"{address}",
                               f'--node={node}',
+                              f'--home={gaia_home}',
                               '--output=json'],
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                              text=True)
@@ -79,6 +81,7 @@ async def tx_send(request: dict):
                               f'--fees={request["fees"]}',
                               f'--node={request["node"]}',
                               f'--chain-id={request["chain_id"]}',
+                              f'--home={request["gaia_home"]}',
                               '--keyring-backend=test',
                               '--output=json',
                               '-y'],
