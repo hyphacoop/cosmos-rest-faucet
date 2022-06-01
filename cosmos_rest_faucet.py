@@ -21,6 +21,7 @@ logging.basicConfig(level=logging.INFO,
 config = toml.load('config.toml')
 
 try:
+    GAIA_HOME = config['gaia_home_folder']
     TX_LOG_PATH = config['transactions_log']
     REQUEST_TIMEOUT = int(config['request_timeout'])
     ADDRESS_PREFIX = config['cosmos']['prefix']
@@ -55,7 +56,8 @@ async def get_faucet_balance(testnet: dict):
     """
     balances = await gaia.get_balance_list(
         address=testnet['faucet_address'],
-        node=testnet['node_url'])
+        node=testnet['node_url'],
+        gaia_home=GAIA_HOME)
     for balance in balances:
         if balance['denom'] == 'uatom':
             return balance['amount']+'uatom'
@@ -67,10 +69,11 @@ async def balance_request(address: str, testnet: dict):
     """
     try:
         # check address is valid
-        await gaia.check_address(address)
+        await gaia.check_address(address=address, gaia_home=GAIA_HOME)
         balance = await gaia.get_balance_list(
             address=address,
-            node=testnet["node_url"])
+            node=testnet["node_url"],
+            gaia_home=GAIA_HOME)
         return balance
     except subprocess.CalledProcessError as cpe:
         raise cpe
@@ -143,7 +146,7 @@ async def token_request(address: str, testnet: dict):
     # Check address
     try:
         # check address is valid
-        await gaia.check_address(address)
+        await gaia.check_address(address=address, gaia_home=GAIA_HOME)
     except Exception as exc:
         raise exc
 
@@ -158,7 +161,8 @@ async def token_request(address: str, testnet: dict):
                             'amount': testnet['amount_to_send'] + DENOM,
                             'fees': testnet['tx_fees'] + DENOM,
                             'chain_id': testnet['chain_id'],
-                            'node': testnet['node_url']}
+                            'node': testnet['node_url'],
+                            'gaia_home': GAIA_HOME}
             try:
                 # Make gaia call and send the response back
                 transfer = await gaia.tx_send(request_dict)

@@ -1,6 +1,6 @@
 # Cosmos REST Faucet configuration
 
-verbose          = "yes"
+gaia_home_folder = "~/.gaia"
 transactions_log = "transactions.csv"
 request_timeout    = "86400"
 
