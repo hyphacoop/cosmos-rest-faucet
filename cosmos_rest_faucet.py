@@ -203,14 +203,18 @@ async def get_balance():
     if 'address' not in request_dict or \
             'chain' not in request_dict:
         return json.dumps({'status': 'fail',
-                           'message': 'Error: address or chain_id not specified'}), 400, {'Content-Type': 'application/json'}
+                           'message': 'Error: address or chain_id not specified'}), \
+                            400, \
+                            {'Content-Type': 'application/json'}
     try:
         address = request_dict['address']
         chain = request_dict['chain']
         if chain not in chain_ids:
             return json.dumps({'status': 'fail',
                                'message': 'Error: invalid chain; '
-                               f'specify one of the following: {chain_ids}'}), 400, {'Content-Type': 'application/json'}
+                               f'specify one of the following: {chain_ids}'}), \
+                                400, \
+                                {'Content-Type': 'application/json'}
         await gaia.check_address(address)
         balance = await balance_request(address=address, testnet=testnets[chain])
         response = {
@@ -219,14 +223,18 @@ async def get_balance():
             'balance': balance,
             'status': 'success'
         }
-        return json.dumps(response), 200, {'Content-Type': 'application/json'}
+        return json.dumps(response), \
+                200, \
+                {'Content-Type': 'application/json'}
     except KeyError as key:
         logging.critical('Key could not be found: %s', key)
     except subprocess.CalledProcessError as cpe:
         msg = cpe.stderr.split('\n')[0]
         if 'parse' in cpe.cmd:
             msg = 'Error: invalid address'
-        return json.dumps({'status': 'fail', 'message': msg}), 400, {'Content-Type': 'application/json'}
+        return json.dumps({'status': 'fail', 'message': msg}), \
+            400, \
+            {'Content-Type': 'application/json'}
 
 
 @app.route('/request', methods=['GET'])
@@ -239,14 +247,18 @@ async def send_tokens():
     if 'address' not in request_dict or \
        'chain' not in request_dict:
         return json.dumps({'status': 'fail',
-                           'message': 'Error: address or chain_id not specified'}), 400, {'Content-Type': 'application/json'}
+                           'message': 'Error: address or chain_id not specified'}), \
+                            400, \
+                            {'Content-Type': 'application/json'}
     try:
         address = request_dict['address']
         chain = request_dict['chain']
         if chain not in chain_ids:
             return json.dumps({'status': 'fail',
                                'message': 'Error: invalid chain; '
-                               f'specify one of the following: {chain_ids}'}), 400, {'Content-Type': 'application/json'}
+                               f'specify one of the following: {chain_ids}'}), \
+                                400, \
+                                {'Content-Type': 'application/json'}
         await gaia.check_address(address)
         amount, transfer = await token_request(address=address, testnet=testnets[chain])
         if amount:
@@ -262,15 +274,21 @@ async def send_tokens():
                 'status': 'fail',
                 'message': transfer
             }
-        return json.dumps(response), 200, {'Content-Type': 'application/json'}
+        return json.dumps(response), \
+            200, \
+            {'Content-Type': 'application/json'}
     except KeyError as key_error:
         logging.critical('Key could not be found: %s', key_error)
-        return json.dumps({'status': 'fail', 'message': 'Missing key'}), 400, {'Content-Type': 'application/json'}
+        return json.dumps({'status': 'fail', 'message': 'Missing key'}), \
+            400, \
+            {'Content-Type': 'application/json'}
     except subprocess.CalledProcessError as cpe:
         msg = cpe.stderr.split('\n')[0]
         if 'parse' in cpe.cmd:
             msg = 'Error: invalid address'
-        return json.dumps({'status': 'fail', 'message': msg}), 400, {'Content-Type': 'application/json'}
+        return json.dumps({'status': 'fail', 'message': msg}), \
+            400, \
+            {'Content-Type': 'application/json'}
 
 
 @app.route('/', methods=['GET'])
