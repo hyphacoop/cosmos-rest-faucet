@@ -1,5 +1,6 @@
-# cosmos-rest-faucet
-A REST server for dispensing testnet tokens
+# Cosmos REST Faucet
+
+⛲ A REST server for dispensing testnet tokens 💧
 
 ## Features
 
@@ -10,15 +11,15 @@ A REST server for dispensing testnet tokens
 - Daily cap for each testnet token
 - Requests are saved in local csv file: date, cosmos address, amount, and testnet
 - Errors are logged to systemd journal
+- Supports Gaia v6.0.4+
 
 ## Requirements
 
-- python 3.8.12+
-- gaia v7.0.0+
-- Initialized gaia instance
-- Faucet keys in gaia keyring
+- Python 3.8.12+
+- Initialized Gaia instance
+- Faucet key in test keyring
 
-## Installation
+## 🔧 Installation
 
 1. Python dependencies:
    
@@ -28,11 +29,10 @@ cosmos-rest-faucet$ source .env/bin/activate
 cosmos-rest-faucet$ pip install -r requirements.txt
 ```
 
-- Modify the nodes, faucet addresses, amount to send, etc. in `config.toml`
+## 🚰 Usage
 
-## Usage
-
-This bot can be run stand-alone (mostly for testing), or as a service.
+1. Modify the nodes, faucet addresses, amount to send, etc. in `config.toml`.
+2. Run the server, either stand-alone or as a service.
 
 ### Stand-alone
 
@@ -68,9 +68,9 @@ The response will be a JSON message:
 
 ```
 {
-  "address": <cosmos_address,
+  "address": <cosmos_address>,
   "amount": <tokens_sent>,
-  "chain": <chain_id,
+  "chain": <chain_id>,
   "hash": <hash_id>,
   "status": <"success" or "fail">
 }
@@ -102,3 +102,8 @@ The response will be a JSON message:
   "status": <"success" or "fail">
 }
 ```
+
+## 🔎 Code Standards
+
+- All Python code is formatted to PEP 8 and linted with `pylint`.
+- See `lint.sh` for details.

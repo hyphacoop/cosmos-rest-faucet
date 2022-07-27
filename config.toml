@@ -16,12 +16,3 @@ denomination   = "uatom"
     daily_cap = "400000000"
     amount_to_send = "10000000"
     tx_fees = "500"
-
-    [testnets.theta-devnet]
-    node_url = "http://one.theta-devnet.polypore.xyz:26657"
-    chain_id = "theta-devnet"
-    faucet_address = "cosmos15aptdqmm7ddgtcrjvc5hs988rlrkze40l4q0he"
-    daily_cap = "50000000"
-    amount_to_send = "1000000"
-    tx_fees = "500"
-
