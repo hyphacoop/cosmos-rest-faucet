@@ -203,7 +203,7 @@ async def get_balance():
     if 'address' not in request_dict or \
             'chain' not in request_dict:
         return json.dumps({'status': 'fail',
-                           'message': 'Error: address or chain_id not specified'}), \
+                           'message': 'Error: address or chain not specified'}), \
                             400, \
                             {'Content-Type': 'application/json'}
     try:
@@ -247,7 +247,7 @@ async def send_tokens():
     if 'address' not in request_dict or \
        'chain' not in request_dict:
         return json.dumps({'status': 'fail',
-                           'message': 'Error: address or chain_id not specified'}), \
+                           'message': 'Error: address or chain not specified'}), \
                             400, \
                             {'Content-Type': 'application/json'}
     try:
