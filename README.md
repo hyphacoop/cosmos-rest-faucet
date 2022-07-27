@@ -102,3 +102,8 @@ The response will be a JSON message:
   "status": <"success" or "fail">
 }
 ```
+
+## 🔎 Code Standards
+
+- All Python code is formatted to PEP 8 and linted with `pylint`.
+- See `lint.sh` for details.
