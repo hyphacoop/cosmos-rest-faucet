@@ -1,5 +1,5 @@
 """
-gaiad utility functions
+stranged utility functions
 - query bank balance
 - query tx
 - node status
@@ -11,11 +11,11 @@ import subprocess
 import logging
 
 
-async def check_address(address: str, gaia_home: str = '~/.gaia'):
+async def check_address(address: str, gaia_home: str = '~/.strange'):
     """
-    gaiad keys parse <address>
+    stranged keys parse <address>
     """
-    check = subprocess.run(["gaiad", "keys", "parse",
+    check = subprocess.run(["stranged", "keys", "parse",
                             f"{address}",
                             f'--home={gaia_home}',
                             '--output=json'],
@@ -35,11 +35,11 @@ async def check_address(address: str, gaia_home: str = '~/.gaia'):
     return None
 
 
-async def get_balance_list(address: str, node: str, gaia_home: str = '~/.gaia'):
+async def get_balance_list(address: str, node: str, gaia_home: str = '~/.strange'):
     """
-    gaiad query bank balances <address> <node> <chain-id>
+    stranged query bank balances <address> <node> <chain-id>
     """
-    balance = subprocess.run(["gaiad", "query", "bank", "balances",
+    balance = subprocess.run(["stranged", "query", "bank", "balances",
                               f"{address}",
                               f'--node={node}',
                               f'--home={gaia_home}',
@@ -69,12 +69,12 @@ async def tx_send(request: dict):
     - "fees"
     - "node"
     - "chain_id"
-    gaiad tx bank send <from address> <to address> <amount>
+    stranged tx bank send <from address> <to address> <amount>
                        <fees> <node> <chain-id>
                        --keyring-backend=test -y
 
     """
-    tx_gaia = subprocess.run(['gaiad', 'tx', 'bank', 'send',
+    tx_gaia = subprocess.run(['stranged', 'tx', 'bank', 'send',
                               f'{request["sender"]}',
                               f'{request["recipient"]}',
                               f'{request["amount"]}',
