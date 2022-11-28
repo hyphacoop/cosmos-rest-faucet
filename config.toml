@@ -9,7 +9,7 @@ prefix         = "cosmos"
 denomination   = "ustrange"
 
 [testnets]
-    [testnets.goc-strange]
+    [testnets.strange-1]
     node_url = "http://strange.goc.strange.love:26657"
     chain_id = "strange-1"
     faucet_address = "cosmos1yngl8avfr394fs26hhwksnxzsgl3ghltxjlq43"
