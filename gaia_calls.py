@@ -1,5 +1,5 @@
 """
-stranged utility functions
+nobled utility functions
 - query bank balance
 - query tx
 - node status
@@ -11,13 +11,13 @@ import subprocess
 import logging
 
 
-async def check_address(address: str, gaia_home: str = '~/.strange'):
+async def check_address(address: str, gaia_home: str = '~/.noble'):
     """
-    stranged keys parse <address>
+    nobled keys parse <address>
     """
-    check = subprocess.run(["stranged", "keys", "parse",
+    check = subprocess.run(["nobled", "keys", "parse",
                             f"{address}",
-                            f'--home=/root/.strange',
+                            f'--home=/root/.noble',
                             '--output=json'],
                            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                            text=True)
@@ -35,14 +35,14 @@ async def check_address(address: str, gaia_home: str = '~/.strange'):
     return None
 
 
-async def get_balance_list(address: str, node: str, gaia_home: str = '~/.strange'):
+async def get_balance_list(address: str, node: str, gaia_home: str = '~/.noble'):
     """
-    stranged query bank balances <address> <node> <chain-id>
+    nobled query bank balances <address> <node> <chain-id>
     """
-    balance = subprocess.run(["stranged", "query", "bank", "balances",
+    balance = subprocess.run(["nobled", "query", "bank", "balances",
                               f"{address}",
                               f'--node={node}',
-                              f'--home=/root/.strange',
+                              f'--home=/root/.noble',
                               '--output=json'],
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                              text=True)
@@ -69,22 +69,20 @@ async def tx_send(request: dict):
     - "fees"
     - "node"
     - "chain_id"
-    stranged tx bank send <from address> <to address> <amount>
+    nobled tx bank send <from address> <to address> <amount>
                        <fees> <node> <chain-id>
                        --keyring-backend=test -y
 
     """
 
-    cmd = ['stranged', 'tx', 'bank', 'send',
+    cmd = ['nobled', 'tx', 'bank', 'send',
                               f'{request["sender"]}',
                               f'{request["recipient"]}',
                               f'{request["amount"]}',
                               f'--node={request["node"]}',
                               f'--chain-id={request["chain_id"]}',
-                              f'--home=/root/.strange',
+                              f'--home=/root/.noble',
                               '--keyring-backend=test',
-                              '--gas-prices=0.0025ustrange',
-                              '--gas-adjustment=1.2',
                               '--output=json',
                               '-y']
     logging.info(" ".join(cmd))

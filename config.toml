@@ -1,18 +1,18 @@
 # Cosmos REST Faucet configuration
 
-gaia_home_folder = "~/.strange"
+gaia_home_folder = "~/.noble"
 transactions_log = "transactions.csv"
 request_timeout    = "86400"
 
 [cosmos]
-prefix         = "cosmos"
-denomination   = "ustrange"
+prefix         = "noble"
+denomination   = "ulove"
 
 [testnets]
-    [testnets.strange-1]
-    node_url = "http://strange.goc.strange.love:26657"
-    chain_id = "strange-1"
-    faucet_address = "cosmos1yngl8avfr394fs26hhwksnxzsgl3ghltxjlq43"
-    daily_cap = "400000000"
+    [testnets.grand-1]
+    node_url = "https://rpc.testnet.noble.strange.love:443"
+    chain_id = "grand-1"
+    faucet_address = "noble19cna85wz2c9q7ersxypqhvdu7kca0z2csda8l8"
+    daily_cap = "1000000000000"
     amount_to_send = "10000000"
-    tx_fees = "500"
+    tx_fees = "0"
