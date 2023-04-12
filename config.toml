@@ -6,7 +6,7 @@ request_timeout    = "86400"
 
 [cosmos]
 prefix         = "noble"
-denomination   = "ulove"
+denomination   = "uusdc"
 
 [testnets]
     [testnets.grand-1]
