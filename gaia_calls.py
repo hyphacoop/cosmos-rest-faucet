@@ -10,14 +10,13 @@ import json
 import subprocess
 import logging
 
-
-async def check_address(address: str, gaia_home: str = '~/.gaia'):
+async def check_address(address: str, node_home: str = '~/.gaia', binary: str = "gaiad"):
     """
     gaiad keys parse <address>
     """
-    check = subprocess.run(["gaiad", "keys", "parse",
+    check = subprocess.run([binary, "keys", "parse",
                             f"{address}",
-                            f'--home={gaia_home}',
+                            f'--home={node_home}',
                             '--output=json'],
                            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                            text=True)
@@ -35,14 +34,14 @@ async def check_address(address: str, gaia_home: str = '~/.gaia'):
     return None
 
 
-async def get_balance_list(address: str, node: str, gaia_home: str = '~/.gaia'):
+async def get_balance_list(address: str, node: str, node_home: str = '~/.gaia', binary: str = "gaiad"):
     """
     gaiad query bank balances <address> <node> <chain-id>
     """
-    balance = subprocess.run(["gaiad", "query", "bank", "balances",
+    balance = subprocess.run([binary, "query", "bank", "balances",
                               f"{address}",
                               f'--node={node}',
-                              f'--home={gaia_home}',
+                              f'--home={node_home}',
                               '--output=json'],
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                              text=True)
@@ -60,7 +59,7 @@ async def get_balance_list(address: str, node: str, gaia_home: str = '~/.gaia'):
     return None
 
 
-async def tx_send(request: dict):
+async def tx_send(request: dict, binary: str = "gaiad"):
     """
     The request dictionary must include these keys:
     - "sender"
@@ -74,28 +73,28 @@ async def tx_send(request: dict):
                        --keyring-backend=test -y
 
     """
-    tx_gaia = subprocess.run(['gaiad', 'tx', 'bank', 'send',
+    tx_node = subprocess.run([binary, 'tx', 'bank', 'send',
                               f'{request["sender"]}',
                               f'{request["recipient"]}',
                               f'{request["amount"]}',
                               f'--fees={request["fees"]}',
                               f'--node={request["node"]}',
                               f'--chain-id={request["chain_id"]}',
-                              f'--home={request["gaia_home"]}',
+                              f'--home={request["node_home"]}',
                               '--keyring-backend=test',
                               '--output=json',
                               '-y'],
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     try:
-        tx_gaia.check_returncode()
-        response = json.loads(tx_gaia.stdout)
+        tx_node.check_returncode()
+        response = json.loads(tx_node.stdout)
         return response['txhash']
     except subprocess.CalledProcessError as cpe:
-        output = str(tx_gaia.stderr).split('\n', maxsplit=1)[0]
+        output = str(tx_node.stderr).split('\n', maxsplit=1)[0]
         logging.error("%s[%s]", cpe, output)
         raise cpe
     except (TypeError, KeyError) as err:
-        output = tx_gaia.stderr
+        output = tx_node.stderr
         logging.critical(
             'Could not read %s in tx response: %s', err, output)
         raise err

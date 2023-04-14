@@ -26,6 +26,7 @@ try:
     REQUEST_TIMEOUT = int(config['request_timeout'])
     ADDRESS_PREFIX = config['cosmos']['prefix']
     DENOM = str(config['cosmos']['denomination'])
+    BINARY = str(config['cosmos']['binary'])
     testnets = config['testnets']
     for net in testnets:
         testnets[net]["active_day"] = datetime.datetime.today().date()
@@ -57,7 +58,7 @@ async def get_faucet_balance(testnet: dict):
     balances = await gaia.get_balance_list(
         address=testnet['faucet_address'],
         node=testnet['node_url'],
-        gaia_home=GAIA_HOME)
+        gaia_home=GAIA_HOME, binary=BINARY)
     for balance in balances:
         if balance['denom'] == 'uatom':
             return balance['amount']+'uatom'
@@ -69,11 +70,11 @@ async def balance_request(address: str, testnet: dict):
     """
     try:
         # check address is valid
-        await gaia.check_address(address=address, gaia_home=GAIA_HOME)
+        await gaia.check_address(address=address, gaia_home=GAIA_HOME, binary=BINARY, binary=BINARY)
         balance = await gaia.get_balance_list(
             address=address,
             node=testnet["node_url"],
-            gaia_home=GAIA_HOME)
+            gaia_home=GAIA_HOME, binary=BINARY)
         return balance
     except subprocess.CalledProcessError as cpe:
         raise cpe
@@ -146,7 +147,7 @@ async def token_request(address: str, testnet: dict):
     # Check address
     try:
         # check address is valid
-        await gaia.check_address(address=address, gaia_home=GAIA_HOME)
+        await gaia.check_address(address=address, gaia_home=GAIA_HOME, binary=BINARY)
     except Exception as exc:
         raise exc
 
@@ -165,7 +166,7 @@ async def token_request(address: str, testnet: dict):
                             'gaia_home': GAIA_HOME}
             try:
                 # Make gaia call and send the response back
-                transfer = await gaia.tx_send(request_dict)
+                transfer = await gaia.tx_send(request_dict, binary=BINARY)
                 logging.info('Tokens were requested for %s in %s',
                              address, testnet['chain_id'])
                 now = datetime.datetime.now()
@@ -215,7 +216,7 @@ async def get_balance():
                                f'specify one of the following: {chain_ids}'}), \
                                 400, \
                                 {'Content-Type': 'application/json'}
-        await gaia.check_address(address)
+        await gaia.check_address(address, binary=BINARY)
         balance = await balance_request(address=address, testnet=testnets[chain])
         response = {
             'address': address,
@@ -259,7 +260,7 @@ async def send_tokens():
                                f'specify one of the following: {chain_ids}'}), \
                                 400, \
                                 {'Content-Type': 'application/json'}
-        await gaia.check_address(address)
+        await gaia.check_address(address, binary=BINARY)
         amount, transfer = await token_request(address=address, testnet=testnets[chain])
         if amount:
             response = {
