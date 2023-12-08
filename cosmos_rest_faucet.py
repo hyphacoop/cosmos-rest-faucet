@@ -11,7 +11,10 @@ import subprocess
 import aiofiles as aiof
 import toml
 from quart import Quart, json, request
-import gaia_calls as gaia
+import node_calls as node
+
+KEY_NOT_FOUND = 'Key could not be found: %s'
+APP_JSON_MIME = 'application/json'
 
 # Configure Logging
 logging.basicConfig(level=logging.INFO,
@@ -21,7 +24,8 @@ logging.basicConfig(level=logging.INFO,
 config = toml.load('config.toml')
 
 try:
-    GAIA_HOME = config['gaia_home_folder']
+    NODE_HOME = config['node_home_folder']
+    CLI_NAME = config['cli_name']
     TX_LOG_PATH = config['transactions_log']
     REQUEST_TIMEOUT = int(config['request_timeout'])
     ADDRESS_PREFIX = config['cosmos']['prefix']
@@ -34,7 +38,7 @@ try:
     ACTIVE_REQUESTS = {net: {} for net in testnets}
     TESTNET_OPTIONS = '|'.join(list(testnets.keys()))
 except KeyError as key_err:
-    logging.critical('Key could not be found: %s', key_err)
+    logging.critical(KEY_NOT_FOUND, key_err)
     sys.exit()
 
 
@@ -54,10 +58,11 @@ async def get_faucet_balance(testnet: dict):
     """
     Returns the uatom balance
     """
-    balances = await gaia.get_balance_list(
+    balances = await node.get_balance_list(
         address=testnet['faucet_address'],
         node=testnet['node_url'],
-        gaia_home=GAIA_HOME)
+        cli_name=CLI_NAME,
+        node_home=NODE_HOME)
     for balance in balances:
         if balance['denom'] == 'uatom':
             return balance['amount']+'uatom'
@@ -67,17 +72,14 @@ async def balance_request(address: str, testnet: dict):
     """
     Provide the balance for a given address and testnet
     """
-    try:
-        # check address is valid
-        await gaia.check_address(address=address, gaia_home=GAIA_HOME)
-        balance = await gaia.get_balance_list(
-            address=address,
-            node=testnet["node_url"],
-            gaia_home=GAIA_HOME)
-        return balance
-    except subprocess.CalledProcessError as cpe:
-        raise cpe
-    return
+    # check address is valid
+    await node.check_address(address=address, cli_name=CLI_NAME, node_home=NODE_HOME)
+    balance = await node.get_balance_list(
+        address=address,
+        node=testnet["node_url"],
+        cli_name=CLI_NAME,
+        node_home=NODE_HOME)
+    return balance
 
 
 def check_time_limits(address: str, testnet: dict):
@@ -144,11 +146,7 @@ async def token_request(address: str, testnet: dict):
     """
 
     # Check address
-    try:
-        # check address is valid
-        await gaia.check_address(address=address, gaia_home=GAIA_HOME)
-    except Exception as exc:
-        raise exc
+    await node.check_address(address=address, cli_name=CLI_NAME, node_home=NODE_HOME)
 
     # Check whether the faucet has reached the daily cap
     if check_daily_cap(testnet=testnet):
@@ -162,10 +160,10 @@ async def token_request(address: str, testnet: dict):
                             'fees': testnet['tx_fees'] + DENOM,
                             'chain_id': testnet['chain_id'],
                             'node': testnet['node_url'],
-                            'gaia_home': GAIA_HOME}
+                            'node_home': NODE_HOME}
             try:
-                # Make gaia call and send the response back
-                transfer = await gaia.tx_send(request_dict)
+                # Make node call and send the response back
+                transfer = await node.tx_send(request_dict, cli_name=CLI_NAME)
                 logging.info('Tokens were requested for %s in %s',
                              address, testnet['chain_id'])
                 now = datetime.datetime.now()
@@ -205,7 +203,7 @@ async def get_balance():
         return json.dumps({'status': 'fail',
                            'message': 'Error: address or chain not specified'}), \
                             400, \
-                            {'Content-Type': 'application/json'}
+                            {'Content-Type': APP_JSON_MIME}
     try:
         address = request_dict['address']
         chain = request_dict['chain']
@@ -214,8 +212,8 @@ async def get_balance():
                                'message': 'Error: invalid chain; '
                                f'specify one of the following: {chain_ids}'}), \
                                 400, \
-                                {'Content-Type': 'application/json'}
-        await gaia.check_address(address)
+                                {'Content-Type': APP_JSON_MIME}
+        await node.check_address(address, cli_name=CLI_NAME, node_home=NODE_HOME)
         balance = await balance_request(address=address, testnet=testnets[chain])
         response = {
             'address': address,
@@ -225,16 +223,16 @@ async def get_balance():
         }
         return json.dumps(response), \
                 200, \
-                {'Content-Type': 'application/json'}
+                {'Content-Type': APP_JSON_MIME}
     except KeyError as key:
-        logging.critical('Key could not be found: %s', key)
+        logging.critical(KEY_NOT_FOUND, key)
     except subprocess.CalledProcessError as cpe:
         msg = cpe.stderr.split('\n')[0]
         if 'parse' in cpe.cmd:
             msg = 'Error: invalid address'
         return json.dumps({'status': 'fail', 'message': msg}), \
             400, \
-            {'Content-Type': 'application/json'}
+            {'Content-Type': APP_JSON_MIME}
 
 
 @app.route('/request', methods=['GET'])
@@ -249,7 +247,7 @@ async def send_tokens():
         return json.dumps({'status': 'fail',
                            'message': 'Error: address or chain not specified'}), \
                             400, \
-                            {'Content-Type': 'application/json'}
+                            {'Content-Type': APP_JSON_MIME}
     try:
         address = request_dict['address']
         chain = request_dict['chain']
@@ -258,8 +256,8 @@ async def send_tokens():
                                'message': 'Error: invalid chain; '
                                f'specify one of the following: {chain_ids}'}), \
                                 400, \
-                                {'Content-Type': 'application/json'}
-        await gaia.check_address(address)
+                                {'Content-Type': APP_JSON_MIME}
+        await node.check_address(address, cli_name=CLI_NAME, node_home=NODE_HOME)
         amount, transfer = await token_request(address=address, testnet=testnets[chain])
         if amount:
             response = {
@@ -276,19 +274,19 @@ async def send_tokens():
             }
         return json.dumps(response), \
             200, \
-            {'Content-Type': 'application/json'}
+            {'Content-Type': APP_JSON_MIME}
     except KeyError as key_error:
-        logging.critical('Key could not be found: %s', key_error)
+        logging.critical(KEY_NOT_FOUND, key_error)
         return json.dumps({'status': 'fail', 'message': 'Missing key'}), \
             400, \
-            {'Content-Type': 'application/json'}
+            {'Content-Type': APP_JSON_MIME}
     except subprocess.CalledProcessError as cpe:
         msg = cpe.stderr.split('\n')[0]
         if 'parse' in cpe.cmd:
             msg = 'Error: invalid address'
         return json.dumps({'status': 'fail', 'message': msg}), \
             400, \
-            {'Content-Type': 'application/json'}
+            {'Content-Type': APP_JSON_MIME}
 
 
 @app.route('/', methods=['GET'])
