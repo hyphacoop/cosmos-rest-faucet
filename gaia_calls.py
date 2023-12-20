@@ -80,6 +80,7 @@ async def tx_send(request: dict):
                               f'{request["recipient"]}',
                               f'{request["amount"]}',
                               f'--node={request["node"]}',
+                              f'--fees={request["fees"]}',
                               f'--chain-id={request["chain_id"]}',
                               f'--home=/root/.noble',
                               '--keyring-backend=test',
