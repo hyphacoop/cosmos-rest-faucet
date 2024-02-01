@@ -2,6 +2,20 @@
 
 ⛲ A REST server for dispensing testnet tokens 💧
 
+
+## Strangelove Notes: Update fuacet settings
+
+Make changes to config.toml or other files.
+
+Build new docker image:
+docker builder build -t ghcr.io/strangelove-ventures/cosmos-rest-faucet:NEW-TAG-HERE
+
+Push image:
+docker push ghcr.io/strangelove-ventures/cosmos-rest-faucet:NEW-TAG-HERE
+
+Update image tag in infra repo
+
+
 ## Features
 
 - Responds to requests for tokens on multiple testnets
