@@ -1,5 +1,5 @@
 """
-gaiad utility functions
+{cli_name} utility functions
 - query bank balance
 - query tx
 - node status
@@ -10,15 +10,17 @@ import json
 import subprocess
 import logging
 
+OUTPUT_TYPE_FLAG = '--output=json'
 
-async def check_address(address: str, gaia_home: str = '~/.gaia'):
+
+async def check_address(address: str, node_home: str = '~/.gaia', cli_name: str = 'gaiad'):
     """
-    gaiad keys parse <address>
+    {cli_name} keys parse <address>
     """
-    check = subprocess.run(["gaiad", "keys", "parse",
+    check = subprocess.run([cli_name, "keys", "parse",
                             f"{address}",
-                            f'--home={gaia_home}',
-                            '--output=json'],
+                            f'--home={node_home}',
+                            OUTPUT_TYPE_FLAG],
                            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                            text=True)
     try:
@@ -32,18 +34,17 @@ async def check_address(address: str, gaia_home: str = '~/.gaia'):
     except IndexError as index_error:
         logging.error('Parsing error on address check: %s', index_error)
         raise index_error
-    return None
 
 
-async def get_balance_list(address: str, node: str, gaia_home: str = '~/.gaia'):
+async def get_balance_list(address: str, node: str, node_home: str = '~/.gaia', cli_name: str = 'gaiad'):
     """
-    gaiad query bank balances <address> <node> <chain-id>
+    {cli_name} query bank balances <address> <node> <chain-id>
     """
-    balance = subprocess.run(["gaiad", "query", "bank", "balances",
+    balance = subprocess.run([cli_name, "query", "bank", "balances",
                               f"{address}",
                               f'--node={node}',
-                              f'--home={gaia_home}',
-                              '--output=json'],
+                              f'--home={node_home}',
+                              OUTPUT_TYPE_FLAG],
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                              text=True)
     try:
@@ -57,10 +58,9 @@ async def get_balance_list(address: str, node: str, gaia_home: str = '~/.gaia'):
     except IndexError as index_error:
         logging.error('Parsing error on balance request: %s', index_error)
         raise index_error
-    return None
 
 
-async def tx_send(request: dict):
+async def tx_send(request: dict, cli_name: str = 'gaiad'):
     """
     The request dictionary must include these keys:
     - "sender"
@@ -69,34 +69,33 @@ async def tx_send(request: dict):
     - "fees"
     - "node"
     - "chain_id"
-    gaiad tx bank send <from address> <to address> <amount>
+    {cli_name} tx bank send <from address> <to address> <amount>
                        <fees> <node> <chain-id>
                        --keyring-backend=test -y
 
     """
-    tx_gaia = subprocess.run(['gaiad', 'tx', 'bank', 'send',
+    tx_node = subprocess.run([cli_name, 'tx', 'bank', 'send',
                               f'{request["sender"]}',
                               f'{request["recipient"]}',
                               f'{request["amount"]}',
                               f'--fees={request["fees"]}',
                               f'--node={request["node"]}',
                               f'--chain-id={request["chain_id"]}',
-                              f'--home={request["gaia_home"]}',
+                              f'--home={request["node_home"]}',
                               '--keyring-backend=test',
-                              '--output=json',
+                              OUTPUT_TYPE_FLAG,
                               '-y'],
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
     try:
-        tx_gaia.check_returncode()
-        response = json.loads(tx_gaia.stdout)
+        tx_node.check_returncode()
+        response = json.loads(tx_node.stdout)
         return response['txhash']
     except subprocess.CalledProcessError as cpe:
-        output = str(tx_gaia.stderr).split('\n', maxsplit=1)[0]
+        output = str(tx_node.stderr).split('\n', maxsplit=1)[0]
         logging.error("%s[%s]", cpe, output)
         raise cpe
     except (TypeError, KeyError) as err:
-        output = tx_gaia.stderr
+        output = tx_node.stderr
         logging.critical(
             'Could not read %s in tx response: %s', err, output)
         raise err
-    return None
