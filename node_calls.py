@@ -36,7 +36,12 @@ async def check_address(address: str, node_home: str = '~/.gaia', cli_name: str 
         raise index_error
 
 
-async def get_balance_list(address: str, node: str, node_home: str = '~/.gaia', cli_name: str = 'gaiad'):
+async def get_balance_list(
+    address: str,
+    node: str,
+    node_home: str = '~/.gaia',
+    cli_name: str = 'gaiad'
+    ):
     """
     {cli_name} query bank balances <address> <node> <chain-id>
     """
@@ -66,7 +71,7 @@ async def tx_send(request: dict, cli_name: str = 'gaiad'):
     - "sender"
     - "recipient"
     - "amount"
-    - "fees"
+    - "gas-prices"
     - "node"
     - "chain_id"
     {cli_name} tx bank send <from address> <to address> <amount>
@@ -78,7 +83,9 @@ async def tx_send(request: dict, cli_name: str = 'gaiad'):
                               f'{request["sender"]}',
                               f'{request["recipient"]}',
                               f'{request["amount"]}',
-                              f'--fees={request["fees"]}',
+                              '--gas=auto',
+                              '--gas-adjustment=3',
+                              f'--gas-prices={request["gas_prices"]}',
                               f'--node={request["node"]}',
                               f'--chain-id={request["chain_id"]}',
                               f'--home={request["node_home"]}',
