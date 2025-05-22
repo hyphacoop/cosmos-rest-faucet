@@ -69,7 +69,11 @@ async def balance_request(address: str, testnet: dict):
     Provide the balance for a given address and testnet
     """
     # check address is valid
-    await node.check_address(address=address, cli_name=testnet['cli_name'], node_home=testnet['node_home'])
+    await node.check_address(
+        address=address,
+        cli_name=testnet['cli_name'],
+        node_home=testnet['node_home']
+    )
     balance = await node.get_balance_list(
         address=address,
         node=testnet["node_url"],
@@ -142,7 +146,11 @@ async def token_request(address: str, testnet: dict):
     """
 
     # Check address
-    await node.check_address(address=address, cli_name=testnet['cli_name'], node_home=testnet['node_home'])
+    await node.check_address(
+        address=address,
+        cli_name=testnet['cli_name'],
+        node_home=testnet['node_home']
+    )
 
     # Check whether the faucet has reached the daily cap
     if check_daily_cap(testnet=testnet):
@@ -211,7 +219,11 @@ async def get_balance():
                                f'specify one of the following: {chain_ids}'}), \
                                 400, \
                                 {'Content-Type': APP_JSON_MIME}
-        await node.check_address(address, cli_name=testnets[chain]['cli_name'], node_home=testnets[chain]['node_home'])
+        await node.check_address(
+            address,
+            cli_name=testnets[chain]['cli_name'],
+            node_home=testnets[chain]['node_home']
+        )
         balance = await balance_request(address=address, testnet=testnets[chain])
         response = {
             'address': address,
@@ -255,7 +267,11 @@ async def send_tokens():
                                f'specify one of the following: {chain_ids}'}), \
                                 400, \
                                 {'Content-Type': APP_JSON_MIME}
-        await node.check_address(address, cli_name=testnets[chain]['cli_name'], node_home=testnets[chain]['node_home'])
+        await node.check_address(
+            address,
+            cli_name=testnets[chain]['cli_name'],
+            node_home=testnets[chain]['node_home']
+        )
         amount, transfer = await token_request(address=address, testnet=testnets[chain])
         if amount:
             response = {
