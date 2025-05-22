@@ -24,12 +24,8 @@ logging.basicConfig(level=logging.INFO,
 config = toml.load('config.toml')
 
 try:
-    NODE_HOME = config['node_home_folder']
-    CLI_NAME = config['cli_name']
     TX_LOG_PATH = config['transactions_log']
     REQUEST_TIMEOUT = int(config['request_timeout'])
-    ADDRESS_PREFIX = config['cosmos']['prefix']
-    DENOM = str(config['cosmos']['denomination'])
     testnets = config['testnets']
     for net in testnets:
         testnets[net]["active_day"] = datetime.datetime.today().date()
@@ -61,11 +57,11 @@ async def get_faucet_balance(testnet: dict):
     balances = await node.get_balance_list(
         address=testnet['faucet_address'],
         node=testnet['node_url'],
-        cli_name=CLI_NAME,
-        node_home=NODE_HOME)
+        cli_name=testnet['cli_name'],
+        node_home=testnet['node_home'])
     for balance in balances:
-        if balance['denom'] == 'uatom':
-            return balance['amount']+'uatom'
+        if balance['denom'] == testnet['denom']:
+            return balance['amount']+testnet['denom']
 
 
 async def balance_request(address: str, testnet: dict):
@@ -73,12 +69,12 @@ async def balance_request(address: str, testnet: dict):
     Provide the balance for a given address and testnet
     """
     # check address is valid
-    await node.check_address(address=address, cli_name=CLI_NAME, node_home=NODE_HOME)
+    await node.check_address(address=address, cli_name=testnet['cli_name'], node_home=testnet['node_home'])
     balance = await node.get_balance_list(
         address=address,
         node=testnet["node_url"],
-        cli_name=CLI_NAME,
-        node_home=NODE_HOME)
+        cli_name=testnet['cli_name'],
+        node_home=testnet['node_home'])
     return balance
 
 
@@ -146,7 +142,7 @@ async def token_request(address: str, testnet: dict):
     """
 
     # Check address
-    await node.check_address(address=address, cli_name=CLI_NAME, node_home=NODE_HOME)
+    await node.check_address(address=address, cli_name=testnet['cli_name'], node_home=testnet['node_home'])
 
     # Check whether the faucet has reached the daily cap
     if check_daily_cap(testnet=testnet):
@@ -154,16 +150,18 @@ async def token_request(address: str, testnet: dict):
         approved, reply = check_time_limits(
             address=address, testnet=testnet)
         if approved:
-            request_dict = {'sender': testnet['faucet_address'],
-                            'recipient': address,
-                            'amount': testnet['amount_to_send'] + DENOM,
-                            'fees': testnet['tx_fees'] + DENOM,
-                            'chain_id': testnet['chain_id'],
-                            'node': testnet['node_url'],
-                            'node_home': NODE_HOME}
+            request_dict = {
+                'sender': testnet['faucet_address'],
+                'recipient': address,
+                'amount': testnet['amount_to_send'] + testnet['denom'],
+                'gas_prices': testnet['gas_prices'] + testnet['denom'],
+                'chain_id': testnet['chain_id'],
+                'node': testnet['node_url'],
+                'node_home': testnet['node_home']
+                }
             try:
                 # Make node call and send the response back
-                transfer = await node.tx_send(request_dict, cli_name=CLI_NAME)
+                transfer = await node.tx_send(request_dict, cli_name=testnet['cli_name'])
                 logging.info('Tokens were requested for %s in %s',
                              address, testnet['chain_id'])
                 now = datetime.datetime.now()
@@ -171,10 +169,10 @@ async def token_request(address: str, testnet: dict):
                 balance = await get_faucet_balance(testnet)
                 await save_transaction_statistics(f'{now.isoformat(timespec="seconds")},'
                                                   f'{testnet["chain_id"]},{address},'
-                                                  f'{testnet["amount_to_send"] + DENOM},'
+                                                  f'{testnet["amount_to_send"] + testnet["denom"]},'
                                                   f'{transfer},'
                                                   f'{balance}')
-                return testnet['amount_to_send']+DENOM, transfer
+                return testnet['amount_to_send']+testnet['denom'], transfer
             except subprocess.CalledProcessError as cpe:
                 del ACTIVE_REQUESTS[testnet['chain_id']][address]
                 testnet['day_tally'] -= int(testnet['amount_to_send'])
@@ -213,7 +211,7 @@ async def get_balance():
                                f'specify one of the following: {chain_ids}'}), \
                                 400, \
                                 {'Content-Type': APP_JSON_MIME}
-        await node.check_address(address, cli_name=CLI_NAME, node_home=NODE_HOME)
+        await node.check_address(address, cli_name=testnets[chain]['cli_name'], node_home=testnets[chain]['node_home'])
         balance = await balance_request(address=address, testnet=testnets[chain])
         response = {
             'address': address,
@@ -257,7 +255,7 @@ async def send_tokens():
                                f'specify one of the following: {chain_ids}'}), \
                                 400, \
                                 {'Content-Type': APP_JSON_MIME}
-        await node.check_address(address, cli_name=CLI_NAME, node_home=NODE_HOME)
+        await node.check_address(address, cli_name=testnets[chain]['cli_name'], node_home=testnets[chain]['node_home'])
         amount, transfer = await token_request(address=address, testnet=testnets[chain])
         if amount:
             response = {
