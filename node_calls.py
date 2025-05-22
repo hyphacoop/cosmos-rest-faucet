@@ -36,7 +36,12 @@ async def check_address(address: str, node_home: str = '~/.gaia', cli_name: str 
         raise index_error
 
 
-async def get_balance_list(address: str, node: str, node_home: str = '~/.gaia', cli_name: str = 'gaiad'):
+async def get_balance_list(
+    address: str,
+    node: str,
+    node_home: str = '~/.gaia',
+    cli_name: str = 'gaiad'
+    ):
     """
     {cli_name} query bank balances <address> <node> <chain-id>
     """
