@@ -13,4 +13,4 @@ priority==2.0.0
 quart==0.17.0
 toml==0.10.2
 Werkzeug==2.1.2
-wsproto==1.1.0
+wsproto==1.2.0
