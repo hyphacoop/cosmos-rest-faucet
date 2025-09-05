@@ -6,7 +6,7 @@ h2==4.1.0
 hpack==4.0.0
 hypercorn==0.13.2
 hyperframe==6.0.1
-itsdangerous==2.1.2
+itsdangerous==2.2.0
 Jinja2==3.1.2
 MarkupSafe==2.1.1
 priority==2.0.0
